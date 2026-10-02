@@ -1,6 +1,7 @@
 import * as THREE from "three";
 
 const gameContainer = document.querySelector("#game");
+const gameShell = document.querySelector(".game-shell");
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x879b9a);
@@ -67,8 +68,16 @@ const movementSpeed = 6;
 const pressedKeys = new Set();
 const clock = new THREE.Clock();
 let isThirdPerson = false;
-const thirdPersonOffset = new THREE.Vector3(0, 3.2, 7.5);
+let cameraYaw = 0;
+let cameraPitch = 0;
+const mouseSensitivity = 0.003;
+let thirdPersonDistance = 7.5;
+const minimumThirdPersonDistance = 3.5;
+const maximumThirdPersonDistance = 16;
 const desiredCameraPosition = new THREE.Vector3();
+const desiredCameraTarget = new THREE.Vector3();
+const cameraRight = new THREE.Vector3();
+const thirdPersonCharacterOffset = 0.32;
 
 window.addEventListener("keydown", (event) => {
   const key = event.key.toLowerCase();
@@ -80,11 +89,49 @@ window.addEventListener("keydown", (event) => {
   if (key === "v" && !event.repeat) {
     isThirdPerson = !isThirdPerson;
     player.visible = isThirdPerson;
+    gameShell.classList.toggle("third-person", isThirdPerson);
   }
 });
 
 window.addEventListener("keyup", (event) => {
   pressedKeys.delete(event.key.toLowerCase());
+});
+
+renderer.domElement.addEventListener("click", () => {
+  if (document.pointerLockElement !== renderer.domElement) {
+    renderer.domElement.requestPointerLock()?.catch(() => {});
+  }
+});
+
+renderer.domElement.addEventListener("contextmenu", (event) => {
+  event.preventDefault();
+});
+
+document.addEventListener("mousemove", (event) => {
+  if (document.pointerLockElement !== renderer.domElement) return;
+
+  cameraYaw += event.movementX * mouseSensitivity;
+  cameraPitch -= event.movementY * mouseSensitivity;
+
+  const minimumPitch = isThirdPerson ? -0.05 : -1.4;
+  const maximumPitch = isThirdPerson ? 1.35 : 1.4;
+  cameraPitch = THREE.MathUtils.clamp(cameraPitch, minimumPitch, maximumPitch);
+});
+
+renderer.domElement.addEventListener("wheel", (event) => {
+  if (!isThirdPerson) return;
+
+  event.preventDefault();
+  thirdPersonDistance = THREE.MathUtils.clamp(
+    thirdPersonDistance + event.deltaY * 0.01,
+    minimumThirdPersonDistance,
+    maximumThirdPersonDistance,
+  );
+}, { passive: false });
+
+document.addEventListener("pointerlockchange", () => {
+  const isPointerLocked = document.pointerLockElement === renderer.domElement;
+  gameShell.classList.toggle("pointer-locked", isPointerLocked);
 });
 
 window.addEventListener("blur", () => pressedKeys.clear());
@@ -104,20 +151,43 @@ function updateMovement(deltaTime) {
   if (directionLength === 0) return;
 
   const distance = (movementSpeed * deltaTime) / directionLength;
-  player.position.x += sideways * distance;
-  player.position.z -= forward * distance;
+  const orbitDirection = isThirdPerson ? -1 : 1;
+  const worldX = orbitDirection * Math.sin(cameraYaw) * forward + Math.cos(cameraYaw) * sideways;
+  const worldZ = -Math.cos(cameraYaw) * forward + orbitDirection * Math.sin(cameraYaw) * sideways;
+  player.position.x += worldX * distance;
+  player.position.z += worldZ * distance;
+  player.rotation.y = cameraYaw;
 }
 
 function updateCamera(deltaTime) {
   if (!isThirdPerson) {
     camera.position.set(player.position.x, 1.7, player.position.z);
-    camera.lookAt(player.position.x, 1.7, player.position.z - 10);
+    const lookDirection = new THREE.Vector3(
+      Math.sin(cameraYaw) * Math.cos(cameraPitch),
+      Math.sin(cameraPitch),
+      -Math.cos(cameraYaw) * Math.cos(cameraPitch),
+    );
+    camera.lookAt(camera.position.clone().add(lookDirection));
     return;
   }
 
-  desiredCameraPosition.copy(player.position).add(thirdPersonOffset);
-  camera.position.lerp(desiredCameraPosition, Math.min(1, deltaTime * 6));
-  camera.lookAt(player.position.x, 1.1, player.position.z);
+  const horizontalDistance = Math.cos(cameraPitch) * thirdPersonDistance;
+  cameraRight.set(Math.cos(cameraYaw), 0, -Math.sin(cameraYaw));
+  desiredCameraPosition.set(
+    player.position.x + Math.sin(cameraYaw) * horizontalDistance,
+    1.1 + Math.sin(cameraPitch) * thirdPersonDistance,
+    player.position.z + Math.cos(cameraYaw) * horizontalDistance,
+  );
+  const framingOffset =
+    thirdPersonDistance *
+    Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) *
+    camera.aspect *
+    thirdPersonCharacterOffset;
+  desiredCameraPosition.addScaledVector(cameraRight, framingOffset);
+  desiredCameraTarget.set(player.position.x, 1.1, player.position.z);
+  desiredCameraTarget.addScaledVector(cameraRight, framingOffset);
+  camera.position.lerp(desiredCameraPosition, Math.min(1, deltaTime * 12));
+  camera.lookAt(desiredCameraTarget);
 }
 
 function animate() {

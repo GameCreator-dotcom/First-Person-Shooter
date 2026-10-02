@@ -15,4 +15,4 @@ If Python 3 is installed, run `python3 -m http.server 8000` and open `http://loc
 
 ## Stage 1
 
-The current build contains first-person and third-person camera views, basic lighting, a large arena floor, and WASD movement. Press `V` to switch views. Movement is kept at the same speed in every direction and is independent of frame rate.
+The current build contains first-person and third-person camera views, basic lighting, a large arena floor, and WASD movement. Click the game to lock the mouse and look around, then press `Esc` to release it. Press `V` to switch views. The crosshair stays centered in both views; in third-person, the character appears to its left and the scroll wheel zooms the camera. WASD follows the camera's horizontal facing direction, including when moving diagonally, and movement speed is independent of frame rate.

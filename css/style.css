@@ -40,6 +40,40 @@ body {
 
 #game canvas {
   display: block;
+  cursor: pointer;
+  touch-action: none;
+}
+
+.crosshair {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  left: 50%;
+  width: 18px;
+  height: 18px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.crosshair::before,
+.crosshair::after {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  content: "";
+  background: #f2f3df;
+  box-shadow: 0 0 2px #101917, 0 0 4px #101917;
+  transform: translate(-50%, -50%);
+}
+
+.crosshair::before {
+  width: 2px;
+  height: 16px;
+}
+
+.crosshair::after {
+  width: 16px;
+  height: 2px;
 }
 
 .status-panel,
@@ -125,6 +159,29 @@ kbd {
   font-size: 9px;
   font-weight: 700;
   letter-spacing: 1.2px;
+}
+
+.zoom-hint {
+  display: none;
+  color: #aabd9d;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+}
+
+.third-person .zoom-hint {
+  display: inline;
+}
+
+.look-hint {
+  color: #aabd9d;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+}
+
+.pointer-locked .look-hint {
+  display: none;
 }
 
 @media (max-width: 520px) {
