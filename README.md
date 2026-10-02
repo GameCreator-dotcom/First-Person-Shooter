@@ -15,4 +15,4 @@ If Python 3 is installed, run `python3 -m http.server 8000` and open `http://loc
 
 ## Stage 1
 
-The current build contains a first-person camera, basic lighting, a large arena floor, and WASD movement. Movement is kept at the same speed in every direction and is independent of frame rate.
+The current build contains first-person and third-person camera views, basic lighting, a large arena floor, and WASD movement. Press `V` to switch views. Movement is kept at the same speed in every direction and is independent of frame rate.

@@ -98,6 +98,14 @@ h1 {
   gap: 3px;
 }
 
+.view-hint {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding-left: 11px;
+  border-left: 1px solid rgb(214 231 214 / 20%);
+}
+
 kbd {
   display: grid;
   width: 22px;
@@ -111,6 +119,12 @@ kbd {
 
 .control-panel > span:last-child {
   font-size: 9px;
+}
+
+.view-hint > span {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
 }
 
 @media (max-width: 520px) {

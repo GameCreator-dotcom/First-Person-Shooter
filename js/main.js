@@ -15,6 +15,23 @@ const camera = new THREE.PerspectiveCamera(
 camera.position.set(0, 1.7, 8);
 camera.lookAt(0, 1.7, 0);
 
+const player = new THREE.Group();
+const body = new THREE.Mesh(
+  new THREE.CapsuleGeometry(0.35, 0.9, 4, 10),
+  new THREE.MeshStandardMaterial({ color: 0x344d45, roughness: 0.8 }),
+);
+body.position.y = 0.85;
+player.add(body);
+
+const head = new THREE.Mesh(
+  new THREE.SphereGeometry(0.24, 16, 12),
+  new THREE.MeshStandardMaterial({ color: 0xc5a77c, roughness: 0.85 }),
+);
+head.position.y = 1.72;
+player.add(head);
+player.visible = false;
+scene.add(player);
+
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -49,12 +66,20 @@ scene.add(grid);
 const movementSpeed = 6;
 const pressedKeys = new Set();
 const clock = new THREE.Clock();
+let isThirdPerson = false;
+const thirdPersonOffset = new THREE.Vector3(0, 3.2, 7.5);
+const desiredCameraPosition = new THREE.Vector3();
 
 window.addEventListener("keydown", (event) => {
   const key = event.key.toLowerCase();
   if (["w", "a", "s", "d"].includes(key)) {
     event.preventDefault();
     pressedKeys.add(key);
+  }
+
+  if (key === "v" && !event.repeat) {
+    isThirdPerson = !isThirdPerson;
+    player.visible = isThirdPerson;
   }
 });
 
@@ -79,13 +104,26 @@ function updateMovement(deltaTime) {
   if (directionLength === 0) return;
 
   const distance = (movementSpeed * deltaTime) / directionLength;
-  camera.position.x += sideways * distance;
-  camera.position.z -= forward * distance;
+  player.position.x += sideways * distance;
+  player.position.z -= forward * distance;
+}
+
+function updateCamera(deltaTime) {
+  if (!isThirdPerson) {
+    camera.position.set(player.position.x, 1.7, player.position.z);
+    camera.lookAt(player.position.x, 1.7, player.position.z - 10);
+    return;
+  }
+
+  desiredCameraPosition.copy(player.position).add(thirdPersonOffset);
+  camera.position.lerp(desiredCameraPosition, Math.min(1, deltaTime * 6));
+  camera.lookAt(player.position.x, 1.1, player.position.z);
 }
 
 function animate() {
   const deltaTime = Math.min(clock.getDelta(), 0.05);
   updateMovement(deltaTime);
+  updateCamera(deltaTime);
   renderer.render(scene, camera);
 }
 
