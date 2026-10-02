@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#101917" />
+    <title>Field Test | First-Person Shooter</title>
+    <link rel="stylesheet" href="/css/style.css" />
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js"
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <main class="game-shell" aria-label="First-person shooter stage one">
+      <div id="game" aria-label="3D test arena"></div>
+
+      <header class="status-panel">
+        <span class="status-mark" aria-hidden="true"></span>
+        <div>
+          <p class="eyebrow">Training ground / 01</p>
+          <h1>FIELD TEST</h1>
+        </div>
+      </header>
+
+      <footer class="control-panel">
+        <span class="key-group" aria-label="W A S D keys">
+          <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd>
+        </span>
+        <span>MOVE AROUND THE ARENA</span>
+      </footer>
+    </main>
+    <script type="module" src="/js/main.js"></script>
+  </body>
+</html>
