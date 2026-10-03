@@ -69,6 +69,7 @@ const pressedKeys = new Set();
 const clock = new THREE.Clock();
 let isThirdPerson = false;
 let cameraYaw = 0;
+let playerYaw = 0;
 let cameraPitch = 0;
 const mouseSensitivity = 0.003;
 let thirdPersonDistance = 7.5;
@@ -77,7 +78,8 @@ const maximumThirdPersonDistance = 16;
 const desiredCameraPosition = new THREE.Vector3();
 const desiredCameraTarget = new THREE.Vector3();
 const cameraRight = new THREE.Vector3();
-const thirdPersonCharacterOffset = 0.32;
+const cameraForward = new THREE.Vector3();
+const thirdPersonCameraSideOffset = 4.5;
 
 window.addEventListener("keydown", (event) => {
   const key = event.key.toLowerCase();
@@ -116,6 +118,7 @@ document.addEventListener("mousemove", (event) => {
   const minimumPitch = isThirdPerson ? -0.05 : -1.4;
   const maximumPitch = isThirdPerson ? 1.35 : 1.4;
   cameraPitch = THREE.MathUtils.clamp(cameraPitch, minimumPitch, maximumPitch);
+  cameraYaw = THREE.MathUtils.euclideanModulo(cameraYaw, Math.PI * 2);
 });
 
 renderer.domElement.addEventListener("wheel", (event) => {
@@ -156,7 +159,9 @@ function updateMovement(deltaTime) {
   const worldZ = -Math.cos(cameraYaw) * forward + orbitDirection * Math.sin(cameraYaw) * sideways;
   player.position.x += worldX * distance;
   player.position.z += worldZ * distance;
-  player.rotation.y = cameraYaw;
+
+  playerYaw = Math.atan2(worldX, worldZ);
+  player.rotation.y = playerYaw;
 }
 
 function updateCamera(deltaTime) {
@@ -171,22 +176,21 @@ function updateCamera(deltaTime) {
     return;
   }
 
-  const horizontalDistance = Math.cos(cameraPitch) * thirdPersonDistance;
-  cameraRight.set(Math.cos(cameraYaw), 0, -Math.sin(cameraYaw));
-  desiredCameraPosition.set(
-    player.position.x + Math.sin(cameraYaw) * horizontalDistance,
-    1.1 + Math.sin(cameraPitch) * thirdPersonDistance,
-    player.position.z + Math.cos(cameraYaw) * horizontalDistance,
-  );
-  const framingOffset =
-    thirdPersonDistance *
-    Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) *
-    camera.aspect *
-    thirdPersonCharacterOffset;
-  desiredCameraPosition.addScaledVector(cameraRight, framingOffset);
-  desiredCameraTarget.set(player.position.x, 1.1, player.position.z);
-  desiredCameraTarget.addScaledVector(cameraRight, framingOffset);
-  camera.position.lerp(desiredCameraPosition, Math.min(1, deltaTime * 12));
+  cameraRight.set(Math.cos(cameraYaw), 0, Math.sin(cameraYaw));
+  cameraForward.set(Math.sin(cameraYaw), 0, -Math.cos(cameraYaw));
+
+  const orbitDistance = Math.cos(cameraPitch) * thirdPersonDistance;
+  desiredCameraPosition.copy(player.position);
+  desiredCameraPosition.addScaledVector(cameraForward, -orbitDistance);
+  desiredCameraPosition.addScaledVector(cameraRight, thirdPersonCameraSideOffset);
+  desiredCameraPosition.y += 1.1 + Math.sin(cameraPitch) * thirdPersonDistance;
+
+  desiredCameraTarget.copy(player.position);
+  desiredCameraTarget.addScaledVector(cameraForward, 2.6);
+  desiredCameraTarget.y += 0.85 + Math.sin(cameraPitch) * 1.4;
+
+  const cameraSmoothing = 1 - Math.exp(-deltaTime * 16);
+  camera.position.lerp(desiredCameraPosition, cameraSmoothing);
   camera.lookAt(desiredCameraTarget);
 }
 
